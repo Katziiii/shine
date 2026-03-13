@@ -98,3 +98,15 @@ void SRL_R(uint8_t *reg);
 void SRL_HL();
 void SWAP_R(uint8_t *reg);
 void SWAP_HL();
+
+void CALL_N16();
+void CALL_CC_N16(uint8_t condition);
+void JP_HL();
+void JP_N16();
+void JP_CC_N16(uint8_t condition);
+void JR_N16();
+void JR_CC_N16(uint8_t condition);
+void RET();
+void RET_CC(uint8_t condition);
+void RETI();
+void RST(uint8_t vec);

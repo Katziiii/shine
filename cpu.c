@@ -1003,6 +1003,83 @@ void SWAP_HL() {
     write_memory(addr, val);
 }
 
+void CALL_N16() {
+    uint8_t lo = read_memory(PC++);
+    uint8_t hi = read_memory(PC++);
+    uint16_t addr = (hi << 8) | lo;
+    SP--;
+    write_memory(SP--, PC >> 8);
+    write_memory(SP, PC & 0xFF);
+    PC = addr;
+}
+
+void CALL_CC_N16(uint8_t condition) {
+    uint8_t lo = read_memory(PC++);
+    uint8_t hi = read_memory(PC++);
+    uint16_t addr = (hi << 8) | lo;
+    if (condition) {
+        SP--;
+        write_memory(SP--, PC >> 8);
+        write_memory(SP, PC & 0xFF);
+        PC = addr;
+    }
+}
+
+void JP_HL() {
+    PC = (H << 8) | L;
+}
+
+void JP_N16() {
+    uint8_t lo = read_memory(PC++);
+    uint8_t hi = read_memory(PC++);
+    PC = (hi << 8) | lo;
+}
+
+void JP_CC_N16(uint8_t condition) {
+    uint8_t lo = read_memory(PC++);
+    uint8_t hi = read_memory(PC++);
+    if (condition)
+        PC = (hi << 8) | lo;
+}
+
+void JR_N16() {
+    int8_t offset = (int8_t)read_memory(PC++);
+    PC += offset;
+}
+
+void JR_CC_N16(uint8_t condition) {
+    int8_t offset = (int8_t)read_memory(PC++);
+    if (condition)
+        PC += offset;
+}
+
+void RET() {
+    uint8_t lo = read_memory(SP++);
+    uint8_t hi = read_memory(SP++);
+    PC = (hi << 8) | lo;
+}
+
+void RET_CC(uint8_t condition) {
+    if (condition) {
+        uint8_t lo = read_memory(SP++);
+        uint8_t hi = read_memory(SP++);
+        PC = (hi << 8) | lo;
+    }
+}
+
+void RETI() {
+    uint8_t lo = read_memory(SP++);
+    uint8_t hi = read_memory(SP++);
+    PC = (hi << 8) | lo;
+}
+
+void RST(uint8_t vec) {
+    SP--;
+    write_memory(SP--, PC >> 8);
+    write_memory(SP, PC & 0xFF);
+    PC = vec;
+}
+
 void cpu_exec () {
     while (1) {
         opcode = get_opcode();
@@ -1551,6 +1628,45 @@ void cpu_exec () {
                     case 0x0F: RRCA(); break;
                     case 0x17: RLA();  break;
                     case 0x1F: RRA();  break;
+
+                    case 0xCD: CALL_N16(); break;
+
+                    case 0xC4: CALL_CC_N16(!(F & FLAG_Z)); break;
+                    case 0xCC: CALL_CC_N16(  F & FLAG_Z);  break;
+                    case 0xD4: CALL_CC_N16(!(F & FLAG_C)); break;
+                    case 0xDC: CALL_CC_N16(  F & FLAG_C);  break;
+
+                    case 0xE9: JP_HL(); break;
+                    case 0xC3: JP_N16(); break;
+
+                    case 0xC2: JP_CC_N16(!(F & FLAG_Z)); break;
+                    case 0xCA: JP_CC_N16(  F & FLAG_Z);  break;
+                    case 0xD2: JP_CC_N16(!(F & FLAG_C)); break;
+                    case 0xDA: JP_CC_N16(  F & FLAG_C);  break;
+
+                    case 0x18: JR_N16(); break;
+
+                    case 0x20: JR_CC_N16(!(F & FLAG_Z)); break;
+                    case 0x28: JR_CC_N16(  F & FLAG_Z);  break;
+                    case 0x30: JR_CC_N16(!(F & FLAG_C)); break;
+                    case 0x38: JR_CC_N16(  F & FLAG_C);  break;
+
+                    case 0xC9: RET(); break;
+                    case 0xD9: RETI(); break;
+
+                    case 0xC0: RET_CC(!(F & FLAG_Z)); break;
+                    case 0xC8: RET_CC(  F & FLAG_Z);  break;
+                    case 0xD0: RET_CC(!(F & FLAG_C)); break;
+                    case 0xD8: RET_CC(  F & FLAG_C);  break;
+
+                    case 0xC7: RST(0x00); break;
+                    case 0xCF: RST(0x08); break;
+                    case 0xD7: RST(0x10); break;
+                    case 0xDF: RST(0x18); break;
+                    case 0xE7: RST(0x20); break;
+                    case 0xEF: RST(0x28); break;
+                    case 0xF7: RST(0x30); break;
+                    case 0xFF: RST(0x38); break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);
