@@ -113,3 +113,9 @@ void RST(uint8_t vec);
 
 void CCF();
 void SCF();
+
+void ADD_SP_E8();
+void PUSH_R16(uint8_t hi, uint8_t lo);
+void POP_R16(uint8_t *hi, uint8_t *lo);
+void PUSH_AF();
+void POP_AF();

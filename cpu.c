@@ -1092,6 +1092,35 @@ void SCF() {
     F |= FLAG_C;
 }
 
+void ADD_SP_E8() {
+    int8_t e8 = (int8_t)read_memory(PC++);
+    uint16_t result = SP + e8;
+    F = 0;
+    if (((SP ^ e8 ^ result) & 0x10))  F |= FLAG_H;
+    if (((SP ^ e8 ^ result) & 0x100)) F |= FLAG_C;
+    SP = result;
+}
+
+void PUSH_R16(uint8_t hi, uint8_t lo) {
+    write_memory(--SP, hi);
+    write_memory(--SP, lo);
+}
+
+void POP_R16(uint8_t *hi, uint8_t *lo) {
+    *lo = read_memory(SP++);
+    *hi = read_memory(SP++);
+}
+
+void PUSH_AF() {
+    write_memory(--SP, A);
+    write_memory(--SP, F & 0xF0);
+}
+
+void POP_AF() {
+    F = read_memory(SP++) & 0xF0;
+    A = read_memory(SP++);
+}
+
 void cpu_exec () {
     while (1) {
         opcode = get_opcode();
@@ -1682,6 +1711,18 @@ void cpu_exec () {
 
                     case 0x3F: CCF(); break;
                     case 0x37: SCF(); break;
+
+                    case 0xE8: ADD_SP_E8(); break;
+
+                    case 0xF5: PUSH_AF(); break;
+                    case 0xC5: PUSH_R16(B, C); break;
+                    case 0xD5: PUSH_R16(D, E); break;
+                    case 0xE5: PUSH_R16(H, L); break;
+
+                    case 0xF1: POP_AF(); break;
+                    case 0xC1: POP_R16(&B, &C); break;
+                    case 0xD1: POP_R16(&D, &E); break;
+                    case 0xE1: POP_R16(&H, &L); break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);
