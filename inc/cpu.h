@@ -55,3 +55,14 @@ void DEC_HL();
 void ADD_HL_R16(uint8_t hi, uint8_t lo);
 void INC_R16(uint8_t *hi, uint8_t *lo);
 void DEC_R16(uint8_t *hi, uint8_t *lo);
+
+void AND_R(uint8_t reg);
+void AND_HL();
+void AND_N();
+void OR_R(uint8_t reg);
+void OR_HL();
+void OR_N();
+void XOR_R(uint8_t reg);
+void XOR_HL();
+void XOR_N();
+void CPL();

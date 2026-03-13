@@ -549,7 +549,6 @@ void ADD_HL_R16(uint8_t hi, uint8_t lo) {
     L = result & 0xFF;
 }
 
-// INC r16
 void INC_R16(uint8_t *hi, uint8_t *lo) {
     /*
      *   0x03  INC BC
@@ -574,6 +573,113 @@ void DEC_R16(uint8_t *hi, uint8_t *lo) {
     val--;
     *hi = val >> 8;
     *lo = val & 0xFF;
+}
+
+void AND_R(uint8_t reg) {
+    /*
+     *   0xA0  AND A,B
+     *   0xA1  AND A,C
+     *   0xA2  AND A,D
+     *   0xA3  AND A,E
+     *   0xA4  AND A,H
+     *   0xA5  AND A,L
+     *   0xA7  AND A,A
+     */
+    A &= reg;
+    F = FLAG_H;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void AND_HL() {
+    /*
+     *   0xA6  AND A,(HL)
+     */
+    A &= read_memory((H << 8) | L);
+    F = FLAG_H;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void AND_N() {
+    /*
+     *   0xE6  AND A,d8
+     */
+    A &= read_memory(PC++);
+    F = FLAG_H;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void OR_R(uint8_t reg) {
+    /*
+     *   0xB0  OR A,B
+     *   0xB1  OR A,C
+     *   0xB2  OR A,D
+     *   0xB3  OR A,E
+     *   0xB4  OR A,H
+     *   0xB5  OR A,L
+     *   0xB7  OR A,A
+     */
+    A |= reg;
+    F = 0;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void OR_HL() {
+    /*
+     *   0xB6  OR A,(HL)
+     */
+    A |= read_memory((H << 8) | L);
+    F = 0;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void OR_N() {
+    /*
+     *   0xF6  OR A,d8
+     */
+    A |= read_memory(PC++);
+    F = 0;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void XOR_R(uint8_t reg) {
+    /*
+     *   0xA8  XOR A,B
+     *   0xA9  XOR A,C
+     *   0xAA  XOR A,D
+     *   0xAB  XOR A,E
+     *   0xAC  XOR A,H
+     *   0xAD  XOR A,L
+     *   0xAF  XOR A,A
+     */
+    A ^= reg;
+    F = 0;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void XOR_HL() {
+    /*
+     *   0xAE  XOR A,(HL)
+     */
+    A ^= read_memory((H << 8) | L);
+    F = 0;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void XOR_N() {
+    /*
+     *   0xEE  XOR A,d8
+     */
+    A ^= read_memory(PC++);
+    F = 0;
+    if (A == 0) F |= FLAG_Z;
+}
+
+void CPL() {
+    /*
+     *   0x2F  CPL
+     */
+    A = ~A;
+    F |= FLAG_N | FLAG_H;
 }
 
 void cpu_exec () {
@@ -782,6 +888,38 @@ void cpu_exec () {
             case 0x1B: DEC_R16(&D, &E); break;
             case 0x2B: DEC_R16(&H, &L); break;
             case 0x3B: SP--; break;
+
+            case 0xA0: AND_R(B); break;
+            case 0xA1: AND_R(C); break;
+            case 0xA2: AND_R(D); break;
+            case 0xA3: AND_R(E); break;
+            case 0xA4: AND_R(H); break;
+            case 0xA5: AND_R(L); break;
+            case 0xA6: AND_HL();  break;
+            case 0xA7: AND_R(A); break;
+            case 0xE6: AND_N();   break;
+
+            case 0xB0: OR_R(B); break;
+            case 0xB1: OR_R(C); break;
+            case 0xB2: OR_R(D); break;
+            case 0xB3: OR_R(E); break;
+            case 0xB4: OR_R(H); break;
+            case 0xB5: OR_R(L); break;
+            case 0xB6: OR_HL();  break;
+            case 0xB7: OR_R(A); break;
+            case 0xF6: OR_N();   break;
+
+            case 0xA8: XOR_R(B); break;
+            case 0xA9: XOR_R(C); break;
+            case 0xAA: XOR_R(D); break;
+            case 0xAB: XOR_R(E); break;
+            case 0xAC: XOR_R(H); break;
+            case 0xAD: XOR_R(L); break;
+            case 0xAE: XOR_HL();  break;
+            case 0xAF: XOR_R(A); break;
+            case 0xEE: XOR_N();   break;
+
+            case 0x2F: CPL(); break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);
