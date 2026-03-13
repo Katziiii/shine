@@ -119,3 +119,7 @@ void PUSH_R16(uint8_t hi, uint8_t lo);
 void POP_R16(uint8_t *hi, uint8_t *lo);
 void PUSH_AF();
 void POP_AF();
+
+void DI();
+void EI();
+void HALT();

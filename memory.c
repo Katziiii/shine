@@ -1,10 +1,10 @@
 #include <stdint.h>
 #include "inc/memory.h"
 
-uint8_t read_memory(uint16_t address) {
-    return memory[address];
-}
-
-void write_memory(uint16_t address, uint8_t value) {
-    memory[address] = value;
-}
+uint8_t vram[0x2000];
+uint8_t eram[0x2000];
+uint8_t wram[0x2000];
+uint8_t oam[0xA0];
+uint8_t io[0x80];
+uint8_t hram[0x7F];
+uint8_t ie;

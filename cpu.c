@@ -11,7 +11,7 @@ uint8_t opcode ;
 uint16_t PC = 0x100;
 
 uint8_t get_opcode() {
-    return read_memory (PC++);
+    return bus_read (PC++);
 }
 
 uint8_t LD8_RR (uint8_t *reg1 ,uint8_t reg2) {
@@ -50,7 +50,7 @@ uint8_t LD8_RN (uint8_t *reg) {
      *     0x2E  LD L,d8
      *     0x3E  LD A,d8
      */
-    return *reg = read_memory(PC++);
+    return *reg = bus_read(PC++);
 }
 
 
@@ -61,8 +61,8 @@ uint16_t LD16_RN(uint8_t *hi, uint8_t *lo) {
      *     0x21  LD HL,n16
      *     0x31  LD SP,n16
      */
-    uint8_t lo_val = read_memory(PC++);
-    uint8_t hi_val = read_memory(PC++);
+    uint8_t lo_val = bus_read(PC++);
+    uint8_t hi_val = bus_read(PC++);
     *hi = hi_val;
     *lo = lo_val;
     return (*hi << 8) | *lo;
@@ -79,7 +79,7 @@ void LD_HL_R(uint8_t *reg) {
      *    0x77  LD (HL),A
      */
     uint16_t addr = (H << 8) | L;
-    write_memory(addr, *reg);
+    bus_write(addr, *reg);
 }
 
 void LD_HL_N() {
@@ -87,7 +87,7 @@ void LD_HL_N() {
      *     0 x36  LD (HL),d8*
      */
     uint16_t addr = (H << 8) | L;
-    write_memory(addr, read_memory(PC++));
+    bus_write(addr, bus_read(PC++));
 }
 
 uint8_t LD_R_HL() {
@@ -101,7 +101,7 @@ uint8_t LD_R_HL() {
      *   0x7E  LD A,(HL)
      */
     uint16_t addr = (H << 8) | L;
-    return read_memory(addr);
+    return bus_read(addr);
 }
 
 void LD_R16_A(uint8_t hi, uint8_t lo) {
@@ -110,25 +110,25 @@ void LD_R16_A(uint8_t hi, uint8_t lo) {
      *   0x12  LD (DE),A
      */
     uint16_t addr = (hi << 8) | lo;
-    write_memory(addr, A);
+    bus_write(addr, A);
 }
 
 void LD_N16_A() {
     /*
      *   0xEA  LD (a16),A
      */
-    uint8_t lo = read_memory(PC++);
-    uint8_t hi = read_memory(PC++);
+    uint8_t lo = bus_read(PC++);
+    uint8_t hi = bus_read(PC++);
     uint16_t addr = (hi << 8) | lo;
-    write_memory(addr, A);
+    bus_write(addr, A);
 }
 
 void LDH_N16_A() {
     /*
      *   0xE0  LDH (a8),A
      */
-    uint16_t addr = 0xFF00 | read_memory(PC++);
-    write_memory(addr, A);
+    uint16_t addr = 0xFF00 | bus_read(PC++);
+    bus_write(addr, A);
 }
 
 void LDH_C_A() {
@@ -136,7 +136,7 @@ void LDH_C_A() {
      *   0xE2  LD (C),A
      */
     uint16_t addr = 0xFF00 | C;
-    write_memory(addr, A);
+    bus_write(addr, A);
 }
 
 uint8_t LD_A_R16(uint8_t hi, uint8_t lo) {
@@ -145,25 +145,25 @@ uint8_t LD_A_R16(uint8_t hi, uint8_t lo) {
      *   0x1A  LD A,(DE)
      */
     uint16_t addr = (hi << 8) | lo;
-    return read_memory(addr);
+    return bus_read(addr);
 }
 
 uint8_t LD_A_N16() {
     /*
      *   0xFA  LD A,(a16)
      */
-    uint8_t lo = read_memory(PC++);
-    uint8_t hi = read_memory(PC++);
+    uint8_t lo = bus_read(PC++);
+    uint8_t hi = bus_read(PC++);
     uint16_t addr = (hi << 8) | lo;
-    return read_memory(addr);
+    return bus_read(addr);
 }
 
 uint8_t LDH_A_N16() {
     /*
      *   0xF0  LDH A,(a8)
      */
-    uint16_t addr = 0xFF00 | read_memory(PC++);
-    return read_memory(addr);
+    uint16_t addr = 0xFF00 | bus_read(PC++);
+    return bus_read(addr);
 }
 
 uint8_t LDH_A_C() {
@@ -171,7 +171,7 @@ uint8_t LDH_A_C() {
      *   0xF2  LD A,(C)
      */
     uint16_t addr = 0xFF00 | C;
-    return read_memory(addr);
+    return bus_read(addr);
 }
 
 void LD_HLI_A() {
@@ -179,7 +179,7 @@ void LD_HLI_A() {
      *   0x22  LD (HL+),A
      */
     uint16_t addr = (H << 8) | L;
-    write_memory(addr, A);
+    bus_write(addr, A);
     uint16_t hl = addr + 1;
     H = hl >> 8;
     L = hl & 0xFF;
@@ -190,7 +190,7 @@ void LD_HLD_A() {
      *   0x32  LD (HL-),A
      */
     uint16_t addr = (H << 8) | L;
-    write_memory(addr, A);
+    bus_write(addr, A);
     uint16_t hl = addr - 1;
     H = hl >> 8;
     L = hl & 0xFF;
@@ -201,7 +201,7 @@ uint8_t LD_A_HLD() {
      *   0x3A  LD A,(HL-)
      */
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     uint16_t hl = addr - 1;
     H = hl >> 8;
     L = hl & 0xFF;
@@ -213,7 +213,7 @@ uint8_t LD_A_HLI() {
      *   0x2A  LD A,(HL+)
      */
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     uint16_t hl = addr + 1;
     H = hl >> 8;
     L = hl & 0xFF;
@@ -224,18 +224,18 @@ void LD_N16_SP() {
     /*
      *   0x08  LD (a16),SP
      */
-    uint8_t lo = read_memory(PC++);
-    uint8_t hi = read_memory(PC++);
+    uint8_t lo = bus_read(PC++);
+    uint8_t hi = bus_read(PC++);
     uint16_t addr = (hi << 8) | lo;
-    write_memory(addr,     SP & 0xFF);
-    write_memory(addr + 1, SP >> 8);
+    bus_write(addr,     SP & 0xFF);
+    bus_write(addr + 1, SP >> 8);
 }
 
 void LD_HL_SP_E8() {
     /*
      *   0xF8  LD HL,SP+r8
      */
-    int8_t e8 = (int8_t)read_memory(PC++);
+    int8_t e8 = (int8_t)bus_read(PC++);
     uint16_t result = SP + e8;
     F = 0;
     if (((SP ^ e8 ^ result) & 0x10))  F |= FLAG_H;
@@ -274,7 +274,7 @@ void ADD_HL() {
     /*
      *   0x86  ADD A,(HL)
      */
-    uint8_t val = read_memory((H << 8) | L);
+    uint8_t val = bus_read((H << 8) | L);
     uint16_t result = A + val;
     F = 0;
     if ((uint8_t)result == 0)          F |= FLAG_Z;
@@ -287,7 +287,7 @@ void ADD_N() {
     /*
      *   0xC6  ADD A,d8
      */
-    uint8_t val = read_memory(PC++);
+    uint8_t val = bus_read(PC++);
     uint16_t result = A + val;
     F = 0;
     if ((uint8_t)result == 0)          F |= FLAG_Z;
@@ -319,7 +319,7 @@ void ADC_HL() {
     /*
      *   0x8E  ADC A,(HL)
      */
-    uint8_t val = read_memory((H << 8) | L);
+    uint8_t val = bus_read((H << 8) | L);
     uint8_t carry = (F & FLAG_C) ? 1 : 0;
     uint16_t result = A + val + carry;
     F = 0;
@@ -333,7 +333,7 @@ void ADC_N() {
     /*
      *   0xCE  ADC A,d8
      */
-    uint8_t val = read_memory(PC++);
+    uint8_t val = bus_read(PC++);
     uint8_t carry = (F & FLAG_C) ? 1 : 0;
     uint16_t result = A + val + carry;
     F = 0;
@@ -365,7 +365,7 @@ void SUB_HL() {
     /*
      *   0x96  SUB A,(HL)
      */
-    uint8_t val = read_memory((H << 8) | L);
+    uint8_t val = bus_read((H << 8) | L);
     uint16_t result = A - val;
     F = FLAG_N;
     if ((uint8_t)result == 0)        F |= FLAG_Z;
@@ -378,7 +378,7 @@ void SUB_N() {
     /*
      *   0xD6  SUB A,d8
      */
-    uint8_t val = read_memory(PC++);
+    uint8_t val = bus_read(PC++);
     uint16_t result = A - val;
     F = FLAG_N;
     if ((uint8_t)result == 0)        F |= FLAG_Z;
@@ -410,7 +410,7 @@ void SBC_HL() {
     /*
      *   0x9E  SBC A,(HL)
      */
-    uint8_t val = read_memory((H << 8) | L);
+    uint8_t val = bus_read((H << 8) | L);
     uint8_t carry = (F & FLAG_C) ? 1 : 0;
     uint16_t result = A - val - carry;
     F = FLAG_N;
@@ -424,7 +424,7 @@ void SBC_N() {
     /*
      *   0xDE  SBC A,d8
      */
-    uint8_t val = read_memory(PC++);
+    uint8_t val = bus_read(PC++);
     uint8_t carry = (F & FLAG_C) ? 1 : 0;
     uint16_t result = A - val - carry;
     F = FLAG_N;
@@ -454,7 +454,7 @@ void CP_HL() {
     /*
      *   0xBE  CP A,(HL)
      */
-    uint8_t val = read_memory((H << 8) | L);
+    uint8_t val = bus_read((H << 8) | L);
     F = FLAG_N;
     if (A == val)             F |= FLAG_Z;
     if ((A & 0xF) < (val & 0xF)) F |= FLAG_H;
@@ -465,7 +465,7 @@ void CP_N() {
     /*
      *   0xFE  CP A,d8
      */
-    uint8_t val = read_memory(PC++);
+    uint8_t val = bus_read(PC++);
     F = FLAG_N;
     if (A == val)             F |= FLAG_Z;
     if ((A & 0xF) < (val & 0xF)) F |= FLAG_H;
@@ -493,12 +493,12 @@ void INC_HL() {
      *   0x34  INC (HL)
      */
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     F &= FLAG_C;
     if ((val & 0xF) == 0xF) F |= FLAG_H;
     val += 1;
     if (val == 0)           F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void DEC_R(uint8_t *reg) {
@@ -523,13 +523,13 @@ void DEC_HL() {
      *   0x35  DEC (HL)
      */
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     F &= FLAG_C;
     F |= FLAG_N;
     if ((val & 0xF) == 0x0) F |= FLAG_H;
     val -= 1;
     if (val == 0)           F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void ADD_HL_R16(uint8_t hi, uint8_t lo) {
@@ -594,7 +594,7 @@ void AND_HL() {
     /*
      *   0xA6  AND A,(HL)
      */
-    A &= read_memory((H << 8) | L);
+    A &= bus_read((H << 8) | L);
     F = FLAG_H;
     if (A == 0) F |= FLAG_Z;
 }
@@ -603,7 +603,7 @@ void AND_N() {
     /*
      *   0xE6  AND A,d8
      */
-    A &= read_memory(PC++);
+    A &= bus_read(PC++);
     F = FLAG_H;
     if (A == 0) F |= FLAG_Z;
 }
@@ -627,7 +627,7 @@ void OR_HL() {
     /*
      *   0xB6  OR A,(HL)
      */
-    A |= read_memory((H << 8) | L);
+    A |= bus_read((H << 8) | L);
     F = 0;
     if (A == 0) F |= FLAG_Z;
 }
@@ -636,7 +636,7 @@ void OR_N() {
     /*
      *   0xF6  OR A,d8
      */
-    A |= read_memory(PC++);
+    A |= bus_read(PC++);
     F = 0;
     if (A == 0) F |= FLAG_Z;
 }
@@ -660,7 +660,7 @@ void XOR_HL() {
     /*
      *   0xAE  XOR A,(HL)
      */
-    A ^= read_memory((H << 8) | L);
+    A ^= bus_read((H << 8) | L);
     F = 0;
     if (A == 0) F |= FLAG_Z;
 }
@@ -669,7 +669,7 @@ void XOR_N() {
     /*
      *   0xEE  XOR A,d8
      */
-    A ^= read_memory(PC++);
+    A ^= bus_read(PC++);
     F = 0;
     if (A == 0) F |= FLAG_Z;
 }
@@ -755,7 +755,7 @@ void BIT_HL(uint8_t bit) {
      *   0x76  BIT 6,(HL)
      *   0x7E  BIT 7,(HL)
      */
-    uint8_t val = read_memory((H << 8) | L);
+    uint8_t val = bus_read((H << 8) | L);
     F &= FLAG_C;
     F |= FLAG_H;
     if (!(val & (1 << bit))) F |= FLAG_Z;
@@ -797,7 +797,7 @@ void RES_HL(uint8_t bit) {
      *   0xBE  RES 7,(HL)
      */
     uint16_t addr = (H << 8) | L;
-    write_memory(addr, read_memory(addr) & ~(1 << bit));
+    bus_write(addr, bus_read(addr) & ~(1 << bit));
 }
 
 void SET_R(uint8_t bit, uint8_t *reg) {
@@ -836,7 +836,7 @@ void SET_HL(uint8_t bit) {
      *   0xFE  SET 7,(HL)
      */
     uint16_t addr = (H << 8) | L;
-    write_memory(addr, read_memory(addr) | (1 << bit));
+    bus_write(addr, bus_read(addr) | (1 << bit));
 }
 
 void RL_R(uint8_t *reg) {
@@ -849,13 +849,13 @@ void RL_R(uint8_t *reg) {
 
 void RL_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     uint8_t carry = (F & FLAG_C) ? 1 : 0;
     F = 0;
     if (val & 0x80) F |= FLAG_C;
     val = (val << 1) | carry;
     if (val == 0)   F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void RLA() {
@@ -874,12 +874,12 @@ void RLC_R(uint8_t *reg) {
 
 void RLC_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     F = 0;
     if (val & 0x80) F |= FLAG_C;
     val = (val << 1) | (val >> 7);
     if (val == 0)   F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void RLCA() {
@@ -898,13 +898,13 @@ void RR_R(uint8_t *reg) {
 
 void RR_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     uint8_t carry = (F & FLAG_C) ? 1 : 0;
     F = 0;
     if (val & 0x01) F |= FLAG_C;
     val = (val >> 1) | (carry << 7);
     if (val == 0)   F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void RRA() {
@@ -923,12 +923,12 @@ void RRC_R(uint8_t *reg) {
 
 void RRC_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     F = 0;
     if (val & 0x01) F |= FLAG_C;
     val = (val >> 1) | (val << 7);
     if (val == 0)   F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void RRCA() {
@@ -946,12 +946,12 @@ void SLA_R(uint8_t *reg) {
 
 void SLA_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     F = 0;
     if (val & 0x80) F |= FLAG_C;
     val <<= 1;
     if (val == 0)   F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void SRA_R(uint8_t *reg) {
@@ -963,12 +963,12 @@ void SRA_R(uint8_t *reg) {
 
 void SRA_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     F = 0;
     if (val & 0x01) F |= FLAG_C;
     val = (val >> 1) | (val & 0x80);
     if (val == 0)   F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void SRL_R(uint8_t *reg) {
@@ -980,12 +980,12 @@ void SRL_R(uint8_t *reg) {
 
 void SRL_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     F = 0;
     if (val & 0x01) F |= FLAG_C;
     val >>= 1;
     if (val == 0)   F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void SWAP_R(uint8_t *reg) {
@@ -996,31 +996,31 @@ void SWAP_R(uint8_t *reg) {
 
 void SWAP_HL() {
     uint16_t addr = (H << 8) | L;
-    uint8_t val = read_memory(addr);
+    uint8_t val = bus_read(addr);
     val = (val << 4) | (val >> 4);
     F = 0;
     if (val == 0) F |= FLAG_Z;
-    write_memory(addr, val);
+    bus_write(addr, val);
 }
 
 void CALL_N16() {
-    uint8_t lo = read_memory(PC++);
-    uint8_t hi = read_memory(PC++);
+    uint8_t lo = bus_read(PC++);
+    uint8_t hi = bus_read(PC++);
     uint16_t addr = (hi << 8) | lo;
     SP--;
-    write_memory(SP--, PC >> 8);
-    write_memory(SP, PC & 0xFF);
+    bus_write(SP--, PC >> 8);
+    bus_write(SP, PC & 0xFF);
     PC = addr;
 }
 
 void CALL_CC_N16(uint8_t condition) {
-    uint8_t lo = read_memory(PC++);
-    uint8_t hi = read_memory(PC++);
+    uint8_t lo = bus_read(PC++);
+    uint8_t hi = bus_read(PC++);
     uint16_t addr = (hi << 8) | lo;
     if (condition) {
         SP--;
-        write_memory(SP--, PC >> 8);
-        write_memory(SP, PC & 0xFF);
+        bus_write(SP--, PC >> 8);
+        bus_write(SP, PC & 0xFF);
         PC = addr;
     }
 }
@@ -1030,53 +1030,53 @@ void JP_HL() {
 }
 
 void JP_N16() {
-    uint8_t lo = read_memory(PC++);
-    uint8_t hi = read_memory(PC++);
+    uint8_t lo = bus_read(PC++);
+    uint8_t hi = bus_read(PC++);
     PC = (hi << 8) | lo;
 }
 
 void JP_CC_N16(uint8_t condition) {
-    uint8_t lo = read_memory(PC++);
-    uint8_t hi = read_memory(PC++);
+    uint8_t lo = bus_read(PC++);
+    uint8_t hi = bus_read(PC++);
     if (condition)
         PC = (hi << 8) | lo;
 }
 
 void JR_N16() {
-    int8_t offset = (int8_t)read_memory(PC++);
+    int8_t offset = (int8_t)bus_read(PC++);
     PC += offset;
 }
 
 void JR_CC_N16(uint8_t condition) {
-    int8_t offset = (int8_t)read_memory(PC++);
+    int8_t offset = (int8_t)bus_read(PC++);
     if (condition)
         PC += offset;
 }
 
 void RET() {
-    uint8_t lo = read_memory(SP++);
-    uint8_t hi = read_memory(SP++);
+    uint8_t lo = bus_read(SP++);
+    uint8_t hi = bus_read(SP++);
     PC = (hi << 8) | lo;
 }
 
 void RET_CC(uint8_t condition) {
     if (condition) {
-        uint8_t lo = read_memory(SP++);
-        uint8_t hi = read_memory(SP++);
+        uint8_t lo = bus_read(SP++);
+        uint8_t hi = bus_read(SP++);
         PC = (hi << 8) | lo;
     }
 }
 
 void RETI() {
-    uint8_t lo = read_memory(SP++);
-    uint8_t hi = read_memory(SP++);
+    uint8_t lo = bus_read(SP++);
+    uint8_t hi = bus_read(SP++);
     PC = (hi << 8) | lo;
 }
 
 void RST(uint8_t vec) {
     SP--;
-    write_memory(SP--, PC >> 8);
-    write_memory(SP, PC & 0xFF);
+    bus_write(SP--, PC >> 8);
+    bus_write(SP, PC & 0xFF);
     PC = vec;
 }
 
@@ -1093,7 +1093,7 @@ void SCF() {
 }
 
 void ADD_SP_E8() {
-    int8_t e8 = (int8_t)read_memory(PC++);
+    int8_t e8 = (int8_t)bus_read(PC++);
     uint16_t result = SP + e8;
     F = 0;
     if (((SP ^ e8 ^ result) & 0x10))  F |= FLAG_H;
@@ -1102,23 +1102,23 @@ void ADD_SP_E8() {
 }
 
 void PUSH_R16(uint8_t hi, uint8_t lo) {
-    write_memory(--SP, hi);
-    write_memory(--SP, lo);
+    bus_write(--SP, hi);
+    bus_write(--SP, lo);
 }
 
 void POP_R16(uint8_t *hi, uint8_t *lo) {
-    *lo = read_memory(SP++);
-    *hi = read_memory(SP++);
+    *lo = bus_read(SP++);
+    *hi = bus_read(SP++);
 }
 
 void PUSH_AF() {
-    write_memory(--SP, A);
-    write_memory(--SP, F & 0xF0);
+    bus_write(--SP, A);
+    bus_write(--SP, F & 0xF0);
 }
 
 void POP_AF() {
-    F = read_memory(SP++) & 0xF0;
-    A = read_memory(SP++);
+    F = bus_read(SP++) & 0xF0;
+    A = bus_read(SP++);
 }
 
 void cpu_exec () {
@@ -1365,7 +1365,7 @@ void cpu_exec () {
             case 0x27: DAA();  break;
 
             case 0xCB: {
-                uint8_t cb_op = read_memory(PC++);
+                uint8_t cb_op = bus_read(PC++);
                 switch (cb_op) {
 
                     case 0x40: BIT_R(0, B); break;
@@ -1724,9 +1724,9 @@ void cpu_exec () {
                     case 0xD1: POP_R16(&D, &E); break;
                     case 0xE1: POP_R16(&H, &L); break;
 
-            default:
-                printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);
-                break;
+                    default:
+                        printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);
+                        break;
         }
     }
 }

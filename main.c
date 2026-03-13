@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    load_rom(argv[0]);
+    load_rom(argv[1]);
     get_rom_info ();
     cpu_exec () ;
 
