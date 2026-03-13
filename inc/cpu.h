@@ -7,8 +7,18 @@
 #define FLAG_H  0x20
 #define FLAG_C  0x10
 
+#define INT_VBLANK  0x01
+#define INT_STAT    0x02
+#define INT_TIMER   0x04
+#define INT_SERIAL  0x08
+#define INT_JOYPAD  0x10
+
+extern uint8_t IME;
+extern uint8_t halted;
+
 uint8_t get_opcode();
-void cpu_exec () ;
+void cpu_exec();
+void handle_interrupts();
 
 uint8_t LD8_RR(uint8_t *reg1, uint8_t reg2);
 uint8_t LD8_RN(uint8_t *reg);
@@ -119,7 +129,3 @@ void PUSH_R16(uint8_t hi, uint8_t lo);
 void POP_R16(uint8_t *hi, uint8_t *lo);
 void PUSH_AF();
 void POP_AF();
-
-void DI();
-void EI();
-void HALT();

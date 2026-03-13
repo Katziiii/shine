@@ -1,12 +1,13 @@
 #include "inc/bus.h"
 #include <stdio.h>
-#include <stdio.h>
 #include "inc/cpu.h"
-
+#include "inc/memory.h"
 
 uint8_t  A, B, C, D, E, H, L, F;
-uint16_t SP ;
-uint8_t opcode ;
+uint16_t SP;
+uint8_t  opcode;
+uint8_t  IME    = 0;
+uint8_t  halted = 0;
 
 uint16_t PC = 0x100;
 
@@ -269,7 +270,6 @@ void ADD_R(uint8_t reg) {
     A = (uint8_t)result;
 }
 
-// ADD A,(HL)
 void ADD_HL() {
     /*
      *   0x86  ADD A,(HL)
@@ -1071,6 +1071,7 @@ void RETI() {
     uint8_t lo = bus_read(SP++);
     uint8_t hi = bus_read(SP++);
     PC = (hi << 8) | lo;
+    IME = 1;
 }
 
 void RST(uint8_t vec) {
@@ -1121,8 +1122,34 @@ void POP_AF() {
     A = bus_read(SP++);
 }
 
-void cpu_exec () {
+void handle_interrupts() {
+    uint8_t triggered = ie & io[0x0F];
+    if (!triggered) return;
+
+    halted = 0;
+
+    if (!IME) return;
+    static const uint8_t bits[5]    = { INT_VBLANK, INT_STAT, INT_TIMER, INT_SERIAL, INT_JOYPAD };
+    static const uint16_t vecs[5]   = { 0x0040, 0x0048, 0x0050, 0x0058, 0x0060 };
+
+    for (int i = 0; i < 5; i++) {
+        if (triggered & bits[i]) {
+            io[0x0F] &= ~bits[i];
+            IME = 0;
+            bus_write(--SP, PC >> 8);
+            bus_write(--SP, PC & 0xFF);
+            PC = vecs[i];
+            return;
+        }
+    }
+}
+
+void cpu_exec() {
     while (1) {
+        handle_interrupts();
+
+        if (halted) continue;
+
         opcode = get_opcode();
         switch (opcode) {
 
@@ -1359,6 +1386,10 @@ void cpu_exec () {
             case 0xEE: XOR_N();   break;
 
             case 0x2F: CPL(); break;
+
+            case 0x76: halted = 1; break;
+            case 0xF3: IME = 0;    break;
+            case 0xFB: IME = 1;    break;
 
             case 0x00: NOP();  break;
             case 0x10: STOP(); break;
