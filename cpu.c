@@ -251,6 +251,293 @@ void LD_SP_HL() {
     SP = (H << 8) | L;
 }
 
+void ADD_R(uint8_t reg) {
+    /*
+     *   0x80  ADD A,B
+     *   0x81  ADD A,C
+     *   0x82  ADD A,D
+     *   0x83  ADD A,E
+     *   0x84  ADD A,H
+     *   0x85  ADD A,L
+     *   0x87  ADD A,A
+     */
+    uint16_t result = A + reg;
+    F = 0;
+    if ((uint8_t)result == 0)        F |= FLAG_Z;
+    if ((A & 0xF) + (reg & 0xF) > 0xF) F |= FLAG_H;
+    if (result > 0xFF)               F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+// ADD A,(HL)
+void ADD_HL() {
+    /*
+     *   0x86  ADD A,(HL)
+     */
+    uint8_t val = read_memory((H << 8) | L);
+    uint16_t result = A + val;
+    F = 0;
+    if ((uint8_t)result == 0)          F |= FLAG_Z;
+    if ((A & 0xF) + (val & 0xF) > 0xF) F |= FLAG_H;
+    if (result > 0xFF)                 F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void ADD_N() {
+    /*
+     *   0xC6  ADD A,d8
+     */
+    uint8_t val = read_memory(PC++);
+    uint16_t result = A + val;
+    F = 0;
+    if ((uint8_t)result == 0)          F |= FLAG_Z;
+    if ((A & 0xF) + (val & 0xF) > 0xF) F |= FLAG_H;
+    if (result > 0xFF)                 F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void ADC_R(uint8_t reg) {
+    /*
+     *   0x88  ADC A,B
+     *   0x89  ADC A,C
+     *   0x8A  ADC A,D
+     *   0x8B  ADC A,E
+     *   0x8C  ADC A,H
+     *   0x8D  ADC A,L
+     *   0x8F  ADC A,A
+     */
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    uint16_t result = A + reg + carry;
+    F = 0;
+    if ((uint8_t)result == 0)                    F |= FLAG_Z;
+    if ((A & 0xF) + (reg & 0xF) + carry > 0xF)  F |= FLAG_H;
+    if (result > 0xFF)                           F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void ADC_HL() {
+    /*
+     *   0x8E  ADC A,(HL)
+     */
+    uint8_t val = read_memory((H << 8) | L);
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    uint16_t result = A + val + carry;
+    F = 0;
+    if ((uint8_t)result == 0)                    F |= FLAG_Z;
+    if ((A & 0xF) + (val & 0xF) + carry > 0xF)  F |= FLAG_H;
+    if (result > 0xFF)                           F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void ADC_N() {
+    /*
+     *   0xCE  ADC A,d8
+     */
+    uint8_t val = read_memory(PC++);
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    uint16_t result = A + val + carry;
+    F = 0;
+    if ((uint8_t)result == 0)                    F |= FLAG_Z;
+    if ((A & 0xF) + (val & 0xF) + carry > 0xF)  F |= FLAG_H;
+    if (result > 0xFF)                           F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void SUB_R(uint8_t reg) {
+    /*
+     *   0x90  SUB A,B
+     *   0x91  SUB A,C
+     *   0x92  SUB A,D
+     *   0x93  SUB A,E
+     *   0x94  SUB A,H
+     *   0x95  SUB A,L
+     *   0x97  SUB A,A
+     */
+    uint16_t result = A - reg;
+    F = FLAG_N;
+    if ((uint8_t)result == 0)        F |= FLAG_Z;
+    if ((A & 0xF) < (reg & 0xF))    F |= FLAG_H;
+    if (A < reg)                     F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void SUB_HL() {
+    /*
+     *   0x96  SUB A,(HL)
+     */
+    uint8_t val = read_memory((H << 8) | L);
+    uint16_t result = A - val;
+    F = FLAG_N;
+    if ((uint8_t)result == 0)        F |= FLAG_Z;
+    if ((A & 0xF) < (val & 0xF))    F |= FLAG_H;
+    if (A < val)                     F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void SUB_N() {
+    /*
+     *   0xD6  SUB A,d8
+     */
+    uint8_t val = read_memory(PC++);
+    uint16_t result = A - val;
+    F = FLAG_N;
+    if ((uint8_t)result == 0)        F |= FLAG_Z;
+    if ((A & 0xF) < (val & 0xF))    F |= FLAG_H;
+    if (A < val)                     F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void SBC_R(uint8_t reg) {
+    /*
+     *   0x98  SBC A,B
+     *   0x99  SBC A,C
+     *   0x9A  SBC A,D
+     *   0x9B  SBC A,E
+     *   0x9C  SBC A,H
+     *   0x9D  SBC A,L
+     *   0x9F  SBC A,A
+     */
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    uint16_t result = A - reg - carry;
+    F = FLAG_N;
+    if ((uint8_t)result == 0)                    F |= FLAG_Z;
+    if ((A & 0xF) < (reg & 0xF) + carry)        F |= FLAG_H;
+    if (A < reg + carry)                         F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void SBC_HL() {
+    /*
+     *   0x9E  SBC A,(HL)
+     */
+    uint8_t val = read_memory((H << 8) | L);
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    uint16_t result = A - val - carry;
+    F = FLAG_N;
+    if ((uint8_t)result == 0)                    F |= FLAG_Z;
+    if ((A & 0xF) < (val & 0xF) + carry)        F |= FLAG_H;
+    if (A < val + carry)                         F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void SBC_N() {
+    /*
+     *   0xDE  SBC A,d8
+     */
+    uint8_t val = read_memory(PC++);
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    uint16_t result = A - val - carry;
+    F = FLAG_N;
+    if ((uint8_t)result == 0)                    F |= FLAG_Z;
+    if ((A & 0xF) < (val & 0xF) + carry)        F |= FLAG_H;
+    if (A < val + carry)                         F |= FLAG_C;
+    A = (uint8_t)result;
+}
+
+void CP_R(uint8_t reg) {
+    /*
+     *   0xB8  CP A,B
+     *   0xB9  CP A,C
+     *   0xBA  CP A,D
+     *   0xBB  CP A,E
+     *   0xBC  CP A,H
+     *   0xBD  CP A,L
+     *   0xBF  CP A,A
+     */
+    F = FLAG_N;
+    if (A == reg)             F |= FLAG_Z;
+    if ((A & 0xF) < (reg & 0xF)) F |= FLAG_H;
+    if (A < reg)              F |= FLAG_C;
+}
+
+void CP_HL() {
+    /*
+     *   0xBE  CP A,(HL)
+     */
+    uint8_t val = read_memory((H << 8) | L);
+    F = FLAG_N;
+    if (A == val)             F |= FLAG_Z;
+    if ((A & 0xF) < (val & 0xF)) F |= FLAG_H;
+    if (A < val)              F |= FLAG_C;
+}
+
+void CP_N() {
+    /*
+     *   0xFE  CP A,d8
+     */
+    uint8_t val = read_memory(PC++);
+    F = FLAG_N;
+    if (A == val)             F |= FLAG_Z;
+    if ((A & 0xF) < (val & 0xF)) F |= FLAG_H;
+    if (A < val)              F |= FLAG_C;
+}
+
+void INC_R(uint8_t *reg) {
+    /*
+     *   0x04  INC B
+     *   0x0C  INC C
+     *   0x14  INC D
+     *   0x1C  INC E
+     *   0x24  INC H
+     *   0x2C  INC L
+     *   0x3C  INC A
+     */
+    F &= FLAG_C;
+    if ((*reg & 0xF) == 0xF) F |= FLAG_H;
+    *reg += 1;
+    if (*reg == 0)           F |= FLAG_Z;
+}
+
+void INC_HL() {
+    /*
+     *   0x34  INC (HL)
+     */
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    F &= FLAG_C;
+    if ((val & 0xF) == 0xF) F |= FLAG_H;
+    val += 1;
+    if (val == 0)           F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void DEC_R(uint8_t *reg) {
+    /*
+     *   0x05  DEC B
+     *   0x0D  DEC C
+     *   0x15  DEC D
+     *   0x1D  DEC E
+     *   0x25  DEC H
+     *   0x2D  DEC L
+     *   0x3D  DEC A
+     */
+    F &= FLAG_C;
+    F |= FLAG_N;
+    if ((*reg & 0xF) == 0x0) F |= FLAG_H;
+    *reg -= 1;
+    if (*reg == 0)           F |= FLAG_Z;
+}
+
+void DEC_HL() {
+    /*
+     *   0x35  DEC (HL)
+     */
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    F &= FLAG_C;
+    F |= FLAG_N;
+    if ((val & 0xF) == 0x0) F |= FLAG_H;
+    val -= 1;
+    if (val == 0)           F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+
+
+
+
+
+
 void cpu_exec () {
     while (1) {
         opcode = get_opcode();
@@ -374,6 +661,74 @@ void cpu_exec () {
             case 0xF8: LD_HL_SP_E8(); break;
 
             case 0xF9: LD_SP_HL(); break;
+
+            case 0x80: ADD_R(B); break;
+            case 0x81: ADD_R(C); break;
+            case 0x82: ADD_R(D); break;
+            case 0x83: ADD_R(E); break;
+            case 0x84: ADD_R(H); break;
+            case 0x85: ADD_R(L); break;
+            case 0x86: ADD_HL();  break;
+            case 0x87: ADD_R(A); break;
+            case 0xC6: ADD_N();   break;
+
+            case 0x88: ADC_R(B); break;
+            case 0x89: ADC_R(C); break;
+            case 0x8A: ADC_R(D); break;
+            case 0x8B: ADC_R(E); break;
+            case 0x8C: ADC_R(H); break;
+            case 0x8D: ADC_R(L); break;
+            case 0x8E: ADC_HL();  break;
+            case 0x8F: ADC_R(A); break;
+            case 0xCE: ADC_N();   break;
+
+            case 0x90: SUB_R(B); break;
+            case 0x91: SUB_R(C); break;
+            case 0x92: SUB_R(D); break;
+            case 0x93: SUB_R(E); break;
+            case 0x94: SUB_R(H); break;
+            case 0x95: SUB_R(L); break;
+            case 0x96: SUB_HL();  break;
+            case 0x97: SUB_R(A); break;
+            case 0xD6: SUB_N();   break;
+
+            case 0x98: SBC_R(B); break;
+            case 0x99: SBC_R(C); break;
+            case 0x9A: SBC_R(D); break;
+            case 0x9B: SBC_R(E); break;
+            case 0x9C: SBC_R(H); break;
+            case 0x9D: SBC_R(L); break;
+            case 0x9E: SBC_HL();  break;
+            case 0x9F: SBC_R(A); break;
+            case 0xDE: SBC_N();   break;
+
+            case 0xB8: CP_R(B); break;
+            case 0xB9: CP_R(C); break;
+            case 0xBA: CP_R(D); break;
+            case 0xBB: CP_R(E); break;
+            case 0xBC: CP_R(H); break;
+            case 0xBD: CP_R(L); break;
+            case 0xBE: CP_HL();  break;
+            case 0xBF: CP_R(A); break;
+            case 0xFE: CP_N();   break;
+
+            case 0x04: INC_R(&B); break;
+            case 0x0C: INC_R(&C); break;
+            case 0x14: INC_R(&D); break;
+            case 0x1C: INC_R(&E); break;
+            case 0x24: INC_R(&H); break;
+            case 0x2C: INC_R(&L); break;
+            case 0x3C: INC_R(&A); break;
+            case 0x34: INC_HL();   break;
+
+            case 0x05: DEC_R(&B); break;
+            case 0x0D: DEC_R(&C); break;
+            case 0x15: DEC_R(&D); break;
+            case 0x1D: DEC_R(&E); break;
+            case 0x25: DEC_R(&H); break;
+            case 0x2D: DEC_R(&L); break;
+            case 0x3D: DEC_R(&A); break;
+            case 0x35: DEC_HL();   break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);
