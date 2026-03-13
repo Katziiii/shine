@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "inc/cpu.h"
 #include "inc/rom.h"
 
 int main(int argc, char *argv[])
@@ -10,6 +11,8 @@ int main(int argc, char *argv[])
     }
 
     load_rom(argv[0]);
+    get_rom_info ();
+    cpu_exec () ;
 
     return 0;
 }
