@@ -682,6 +682,41 @@ void CPL() {
     F |= FLAG_N | FLAG_H;
 }
 
+void NOP() {
+    /*
+     *   0x00  NOP
+     */
+}
+
+void STOP() {
+    /*
+     *   0x10  STOP
+     */
+    PC++; // skip next byte (always 0x00)
+}
+
+void DAA() {
+    /*
+     *   0x27  DAA
+     */
+    uint8_t correction = 0;
+    uint8_t carry = 0;
+
+    if (F & FLAG_H || (!(F & FLAG_N) && (A & 0xF) > 9))
+        correction |= 0x06;
+
+    if (F & FLAG_C || (!(F & FLAG_N) && A > 0x99)) {
+        correction |= 0x60;
+        carry = 1;
+    }
+
+    A += (F & FLAG_N) ? -correction : correction;
+
+    F &= ~(FLAG_H | FLAG_Z | FLAG_C);
+    if (A == 0)  F |= FLAG_Z;
+    if (carry)   F |= FLAG_C;
+}
+
 void cpu_exec () {
     while (1) {
         opcode = get_opcode();
@@ -920,6 +955,10 @@ void cpu_exec () {
             case 0xEE: XOR_N();   break;
 
             case 0x2F: CPL(); break;
+
+            case 0x00: NOP();  break;
+            case 0x10: STOP(); break;
+            case 0x27: DAA();  break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);

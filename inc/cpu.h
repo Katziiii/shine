@@ -66,3 +66,7 @@ void XOR_R(uint8_t reg);
 void XOR_HL();
 void XOR_N();
 void CPL();
+
+void NOP();
+void STOP();
+void DAA();
