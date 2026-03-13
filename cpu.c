@@ -839,6 +839,170 @@ void SET_HL(uint8_t bit) {
     write_memory(addr, read_memory(addr) | (1 << bit));
 }
 
+void RL_R(uint8_t *reg) {
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    F = 0;
+    if (*reg & 0x80) F |= FLAG_C;
+    *reg = (*reg << 1) | carry;
+    if (*reg == 0)   F |= FLAG_Z;
+}
+
+void RL_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    F = 0;
+    if (val & 0x80) F |= FLAG_C;
+    val = (val << 1) | carry;
+    if (val == 0)   F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void RLA() {
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    F = 0;
+    if (A & 0x80) F |= FLAG_C;
+    A = (A << 1) | carry;
+}
+
+void RLC_R(uint8_t *reg) {
+    F = 0;
+    if (*reg & 0x80) F |= FLAG_C;
+    *reg = (*reg << 1) | (*reg >> 7);
+    if (*reg == 0)   F |= FLAG_Z;
+}
+
+void RLC_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    F = 0;
+    if (val & 0x80) F |= FLAG_C;
+    val = (val << 1) | (val >> 7);
+    if (val == 0)   F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void RLCA() {
+    F = 0;
+    if (A & 0x80) F |= FLAG_C;
+    A = (A << 1) | (A >> 7);
+}
+
+void RR_R(uint8_t *reg) {
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    F = 0;
+    if (*reg & 0x01) F |= FLAG_C;
+    *reg = (*reg >> 1) | (carry << 7);
+    if (*reg == 0)   F |= FLAG_Z;
+}
+
+void RR_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    F = 0;
+    if (val & 0x01) F |= FLAG_C;
+    val = (val >> 1) | (carry << 7);
+    if (val == 0)   F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void RRA() {
+    uint8_t carry = (F & FLAG_C) ? 1 : 0;
+    F = 0;
+    if (A & 0x01) F |= FLAG_C;
+    A = (A >> 1) | (carry << 7);
+}
+
+void RRC_R(uint8_t *reg) {
+    F = 0;
+    if (*reg & 0x01) F |= FLAG_C;
+    *reg = (*reg >> 1) | (*reg << 7);
+    if (*reg == 0)   F |= FLAG_Z;
+}
+
+void RRC_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    F = 0;
+    if (val & 0x01) F |= FLAG_C;
+    val = (val >> 1) | (val << 7);
+    if (val == 0)   F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void RRCA() {
+    F = 0;
+    if (A & 0x01) F |= FLAG_C;
+    A = (A >> 1) | (A << 7);
+}
+
+void SLA_R(uint8_t *reg) {
+    F = 0;
+    if (*reg & 0x80) F |= FLAG_C;
+    *reg <<= 1;
+    if (*reg == 0)   F |= FLAG_Z;
+}
+
+void SLA_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    F = 0;
+    if (val & 0x80) F |= FLAG_C;
+    val <<= 1;
+    if (val == 0)   F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void SRA_R(uint8_t *reg) {
+    F = 0;
+    if (*reg & 0x01) F |= FLAG_C;
+    *reg = (*reg >> 1) | (*reg & 0x80);
+    if (*reg == 0)   F |= FLAG_Z;
+}
+
+void SRA_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    F = 0;
+    if (val & 0x01) F |= FLAG_C;
+    val = (val >> 1) | (val & 0x80);
+    if (val == 0)   F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void SRL_R(uint8_t *reg) {
+    F = 0;
+    if (*reg & 0x01) F |= FLAG_C;
+    *reg >>= 1;
+    if (*reg == 0)   F |= FLAG_Z;
+}
+
+void SRL_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    F = 0;
+    if (val & 0x01) F |= FLAG_C;
+    val >>= 1;
+    if (val == 0)   F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
+void SWAP_R(uint8_t *reg) {
+    *reg = (*reg << 4) | (*reg >> 4);
+    F = 0;
+    if (*reg == 0) F |= FLAG_Z;
+}
+
+void SWAP_HL() {
+    uint16_t addr = (H << 8) | L;
+    uint8_t val = read_memory(addr);
+    val = (val << 4) | (val >> 4);
+    F = 0;
+    if (val == 0) F |= FLAG_Z;
+    write_memory(addr, val);
+}
+
 void cpu_exec () {
     while (1) {
         opcode = get_opcode();
@@ -1305,11 +1469,88 @@ void cpu_exec () {
                     case 0xF6: SET_HL(6); break;
                     case 0xFE: SET_HL(7); break;
 
+                    case 0x00: RLC_R(&B); break;
+                    case 0x01: RLC_R(&C); break;
+                    case 0x02: RLC_R(&D); break;
+                    case 0x03: RLC_R(&E); break;
+                    case 0x04: RLC_R(&H); break;
+                    case 0x05: RLC_R(&L); break;
+                    case 0x06: RLC_HL();  break;
+                    case 0x07: RLC_R(&A); break;
+
+                    case 0x08: RRC_R(&B); break;
+                    case 0x09: RRC_R(&C); break;
+                    case 0x0A: RRC_R(&D); break;
+                    case 0x0B: RRC_R(&E); break;
+                    case 0x0C: RRC_R(&H); break;
+                    case 0x0D: RRC_R(&L); break;
+                    case 0x0E: RRC_HL();  break;
+                    case 0x0F: RRC_R(&A); break;
+
+                    case 0x10: RL_R(&B); break;
+                    case 0x11: RL_R(&C); break;
+                    case 0x12: RL_R(&D); break;
+                    case 0x13: RL_R(&E); break;
+                    case 0x14: RL_R(&H); break;
+                    case 0x15: RL_R(&L); break;
+                    case 0x16: RL_HL();  break;
+                    case 0x17: RL_R(&A); break;
+
+                    case 0x18: RR_R(&B); break;
+                    case 0x19: RR_R(&C); break;
+                    case 0x1A: RR_R(&D); break;
+                    case 0x1B: RR_R(&E); break;
+                    case 0x1C: RR_R(&H); break;
+                    case 0x1D: RR_R(&L); break;
+                    case 0x1E: RR_HL();  break;
+                    case 0x1F: RR_R(&A); break;
+
+                    case 0x20: SLA_R(&B); break;
+                    case 0x21: SLA_R(&C); break;
+                    case 0x22: SLA_R(&D); break;
+                    case 0x23: SLA_R(&E); break;
+                    case 0x24: SLA_R(&H); break;
+                    case 0x25: SLA_R(&L); break;
+                    case 0x26: SLA_HL();  break;
+                    case 0x27: SLA_R(&A); break;
+
+                    case 0x28: SRA_R(&B); break;
+                    case 0x29: SRA_R(&C); break;
+                    case 0x2A: SRA_R(&D); break;
+                    case 0x2B: SRA_R(&E); break;
+                    case 0x2C: SRA_R(&H); break;
+                    case 0x2D: SRA_R(&L); break;
+                    case 0x2E: SRA_HL();  break;
+                    case 0x2F: SRA_R(&A); break;
+
+                    case 0x30: SWAP_R(&B); break;
+                    case 0x31: SWAP_R(&C); break;
+                    case 0x32: SWAP_R(&D); break;
+                    case 0x33: SWAP_R(&E); break;
+                    case 0x34: SWAP_R(&H); break;
+                    case 0x35: SWAP_R(&L); break;
+                    case 0x36: SWAP_HL();  break;
+                    case 0x37: SWAP_R(&A); break;
+
+                    case 0x38: SRL_R(&B); break;
+                    case 0x39: SRL_R(&C); break;
+                    case 0x3A: SRL_R(&D); break;
+                    case 0x3B: SRL_R(&E); break;
+                    case 0x3C: SRL_R(&H); break;
+                    case 0x3D: SRL_R(&L); break;
+                    case 0x3E: SRL_HL();  break;
+                    case 0x3F: SRL_R(&A); break;
+
                     default:
                         printf("Unknown CB: 0x%02X @ PC=0x%04X\n", cb_op, PC - 1);
                         break;
                 }
             } break;
+
+                    case 0x07: RLCA(); break;
+                    case 0x0F: RRCA(); break;
+                    case 0x17: RLA();  break;
+                    case 0x1F: RRA();  break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);
