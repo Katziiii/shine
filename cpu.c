@@ -1080,6 +1080,18 @@ void RST(uint8_t vec) {
     PC = vec;
 }
 
+void CCF() {
+    F &= ~FLAG_N;
+    F &= ~FLAG_H;
+    F ^= FLAG_C;
+}
+
+void SCF() {
+    F &= ~FLAG_N;
+    F &= ~FLAG_H;
+    F |= FLAG_C;
+}
+
 void cpu_exec () {
     while (1) {
         opcode = get_opcode();
@@ -1667,6 +1679,9 @@ void cpu_exec () {
                     case 0xEF: RST(0x28); break;
                     case 0xF7: RST(0x30); break;
                     case 0xFF: RST(0x38); break;
+
+                    case 0x3F: CCF(); break;
+                    case 0x37: SCF(); break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);

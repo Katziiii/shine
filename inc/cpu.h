@@ -110,3 +110,6 @@ void RET();
 void RET_CC(uint8_t condition);
 void RETI();
 void RST(uint8_t vec);
+
+void CCF();
+void SCF();
