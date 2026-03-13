@@ -532,11 +532,49 @@ void DEC_HL() {
     write_memory(addr, val);
 }
 
+void ADD_HL_R16(uint8_t hi, uint8_t lo) {
+    /*
+     *   0x09  ADD HL,BC
+     *   0x19  ADD HL,DE
+     *   0x29  ADD HL,HL
+     *   0x39  ADD HL,SP
+     */
+    uint16_t hl  = (H << 8) | L;
+    uint16_t r16 = (hi << 8) | lo;
+    uint32_t result = hl + r16;
+    F &= FLAG_Z;
+    if ((hl & 0xFFF) + (r16 & 0xFFF) > 0xFFF) F |= FLAG_H;
+    if (result > 0xFFFF)                       F |= FLAG_C;
+    H = (result >> 8) & 0xFF;
+    L = result & 0xFF;
+}
 
+// INC r16
+void INC_R16(uint8_t *hi, uint8_t *lo) {
+    /*
+     *   0x03  INC BC
+     *   0x13  INC DE
+     *   0x23  INC HL
+     *   0x33  INC SP
+     */
+    uint16_t val = (*hi << 8) | *lo;
+    val++;
+    *hi = val >> 8;
+    *lo = val & 0xFF;
+}
 
-
-
-
+void DEC_R16(uint8_t *hi, uint8_t *lo) {
+    /*
+     *   0x0B  DEC BC
+     *   0x1B  DEC DE
+     *   0x2B  DEC HL
+     *   0x3B  DEC SP
+     */
+    uint16_t val = (*hi << 8) | *lo;
+    val--;
+    *hi = val >> 8;
+    *lo = val & 0xFF;
+}
 
 void cpu_exec () {
     while (1) {
@@ -729,6 +767,21 @@ void cpu_exec () {
             case 0x2D: DEC_R(&L); break;
             case 0x3D: DEC_R(&A); break;
             case 0x35: DEC_HL();   break;
+
+            case 0x09: ADD_HL_R16(B, C); break;
+            case 0x19: ADD_HL_R16(D, E); break;
+            case 0x29: ADD_HL_R16(H, L); break;
+            case 0x39: ADD_HL_R16(SP >> 8, SP & 0xFF); break;
+
+            case 0x03: INC_R16(&B, &C); break;
+            case 0x13: INC_R16(&D, &E); break;
+            case 0x23: INC_R16(&H, &L); break;
+            case 0x33: SP++; break;
+
+            case 0x0B: DEC_R16(&B, &C); break;
+            case 0x1B: DEC_R16(&D, &E); break;
+            case 0x2B: DEC_R16(&H, &L); break;
+            case 0x3B: SP--; break;
 
             default:
                 printf("Unknown opcode: 0x%02X @ PC=0x%04X\n", opcode, PC - 1);

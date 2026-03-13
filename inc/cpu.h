@@ -51,3 +51,7 @@ void INC_R(uint8_t *reg);
 void INC_HL();
 void DEC_R(uint8_t *reg);
 void DEC_HL();
+
+void ADD_HL_R16(uint8_t hi, uint8_t lo);
+void INC_R16(uint8_t *hi, uint8_t *lo);
+void DEC_R16(uint8_t *hi, uint8_t *lo);
