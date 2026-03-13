@@ -70,3 +70,10 @@ void CPL();
 void NOP();
 void STOP();
 void DAA();
+
+void BIT_R(uint8_t bit, uint8_t reg);
+void BIT_HL(uint8_t bit);
+void RES_R(uint8_t bit, uint8_t *reg);
+void RES_HL(uint8_t bit);
+void SET_R(uint8_t bit, uint8_t *reg);
+void SET_HL(uint8_t bit);
